@@ -9,13 +9,15 @@ Author URI: https://webeer.tech
 License: arorii
 */
 
-// ショートコード
-function lds_tmdb_story( $atts ) {
+/**
+ * ショートコード
+ */
+function lds_tmdbms( $atts ) {
   extract( shortcode_atts( array(
     'year' => '',
-		'title' => '',
-		'lang' => 'ja-JA',
-		'apikey' => get_option('tmdbms_setting')[tamdb_apikey],
+    'title' => '',
+    'lang' => 'ja-JA',
+    'apikey' => get_option('tmdbms_setting')['tamdb_apikey'],
   ), $atts ) );
 
   //作品タイトル
@@ -31,9 +33,39 @@ function lds_tmdb_story( $atts ) {
 	return $overview;
 
 }
-add_shortcode('tmdb_story', 'lds_tmdb_story');
+add_shortcode('tmdb_story', 'lds_tmdbms');
 
-// オプションページを作る
+/**
+ * ブロックパターン
+ */
+function lds_my_movie(){
+
+    // カテゴリーを追加
+    register_block_pattern_category(
+      'movie',
+      array( 'label' => '映画情報' )
+    );
+  
+    // 映画のあらすじ
+    $code = '<!-- wp:shortcode -->[tmdb_story title=""]<!-- /wp:shortcode -->';
+    register_block_pattern(
+      'my-movie/story',
+      array(
+        'title'       => '映画のあらすじ',
+        'description' => '',
+        'content'     => $code,
+        'keywords'    => '映画のあらすじ',
+        'categories' => array( 'movie' )
+      )
+    );
+    
+  }
+  add_action( 'init', 'lds_my_movie' );
+
+
+/**
+ * オプションページを作る
+ */
 class TMDBMSSettingsPage
 {
     private $options;
@@ -147,6 +179,23 @@ if( is_admin() ) {
     $tmdbms_settings_page = new TMDBMSSettingsPage();
 }
 
-
+/**
+ * 設定へのリンクを貼る
+ */
+function myplugin_plugin_action_links($links, $file) {
+	static $this_plugin;
+	
+  if (!$this_plugin) {
+		$this_plugin = plugin_basename(__FILE__);
+  }
+	
+  if ($file == $this_plugin) {
+		$settings_link = '<a href="' . get_bloginfo('wpurl') . '/wp-admin/options-general.php?page=tmdbms_setting">設定</a>';
+		array_unshift($links, $settings_link);
+  }
+	
+  return $links;
+}
+add_filter('plugin_action_links', 'myplugin_plugin_action_links', 10, 2);
 
 
